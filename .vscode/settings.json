@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "sstream": "cpp",
+        "regex": "cpp",
+        "*.ipp": "cpp",
+        "vio_priv.h": "c",
+        "my_global.h": "c",
+        "mysql_com.h": "c"
+    }
+}

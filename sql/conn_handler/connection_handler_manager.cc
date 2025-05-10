@@ -265,15 +265,19 @@ bool Connection_handler_manager::unload_connection_handler()
 void
 Connection_handler_manager::process_new_connection(Channel_info* channel_info)
 {
+  // 1. 检查服务器是否正在关闭或连接数是否已满
   if (abort_loop || !check_and_incr_conn_count())
   {
+    // 向客户端发送连接错误信息并关闭通道
     channel_info->send_error_and_close_channel(ER_CON_COUNT_ERROR, 0, true);
     delete channel_info;
     return;
   }
 
+  // 将连接添加到连接处理器
   if (m_connection_handler->add_connection(channel_info))
   {
+    // 失败处理
     inc_aborted_connects();
     delete channel_info;
   }

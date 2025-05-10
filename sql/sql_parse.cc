@@ -884,7 +884,7 @@ void cleanup_items(Item *item)
   DBUG_VOID_RETURN;
 }
 
-#ifndef EMBEDDED_LIBRARY
+#ifndef EMBEDDED_LIBRARY // 非嵌入式库版本
 
 /**
   Read one command from connection and execute it (query or simple command).
@@ -914,6 +914,8 @@ bool do_command(THD *thd)
   /*
     indicator of uninitialized lex => normal flow of errors handling
     (see my_message_sql)
+    当前无 select 语句
+    这种设定是一种“标志”，表示 LEX 还没初始化（或初始化被中断）。
   */
   thd->lex->set_current_select(0);
 
@@ -922,6 +924,8 @@ bool do_command(THD *thd)
     Consider moving to prepare_new_connection_state() instead.
     That requires making sure the DA is cleared before non-parsing statements
     such as COM_QUIT.
+    XXX 是一种开发中常用的“醒目标记”，比 TODO 更强调“这段代码需要重构或特别注意”。
+    目前这段代码仅仅是为了清除 init_connect（初始化连接时）可能产生的错误。
   */
   thd->clear_error();				// Clear error message
   thd->get_stmt_da()->reset_diagnostics_area();
@@ -933,6 +937,15 @@ bool do_command(THD *thd)
       will be interrupted when the next command is received from
       the client, the connection is closed or "net_wait_timeout"
       number of seconds has passed.
+      是否使用经典（classic）协议，并为其配置超时等参数：
+      当前线程会在这一步阻塞等待客户端输入。
+      它会被下面三种情况之一“打断”：
+      客户端发来新命令；
+      客户端断开连接；
+      超过 net_wait_timeout 秒未收到数据。
+
+      这段代码的意图是配置好超时时间并初始化网络事务，为下一步从客户端读取数据做好准备。
+
     */
     net= thd->get_protocol_classic()->get_net();
     my_net_set_read_timeout(net, thd->variables.net_wait_timeout);
@@ -952,6 +965,12 @@ bool do_command(THD *thd)
     kill. In this case it consumes a condition broadcast, but does
     not change anything else. The consumed broadcast should not
     matter here, because the read/recv() below doesn't use it.
+    这段代码和注释属于 MySQL 的测试机制，用于验证在某些关键路径中被 
+    KILL CONNECTION 杀掉连接时是否能正确处理，不会出现挂起或资源泄漏等问题。
+    其目的是模拟在这段时间内连接被 KILL 的情况，看系统能否正确中断。
+
+    测试时，可以线程运行到 DEBUG_SYNC(thd, "before_do_command_net_read"); 时，会主动挂起；
+
   */
   DEBUG_SYNC(thd, "before_do_command_net_read");
 

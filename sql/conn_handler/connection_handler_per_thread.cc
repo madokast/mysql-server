@@ -308,11 +308,13 @@ extern "C" void *handle_connection(void *arg)
       handler_manager->inc_aborted_connects();
     else
     {
+      // 死循环，处理用户命令
       while (thd_connection_alive(thd))
       {
         if (do_command(thd))
           break;
       }
+      // 连接不存活，则释放资源 (主要是 THD)
       end_connection(thd);
     }
     close_connection(thd, 0, false, false);
@@ -340,7 +342,8 @@ extern "C" void *handle_connection(void *arg)
 
     if (abort_loop) // Server is shutting down so end the pthread.
       break;
-
+    
+    // 然后这里尝试重用线程，处理下一个请求
     channel_info= Per_thread_connection_handler::block_until_new_connection();
     if (channel_info == NULL)
       break;

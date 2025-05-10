@@ -70,6 +70,7 @@ public:
     Connection_handler_manager *mgr= Connection_handler_manager::get_instance();
     while (!abort_loop)
     {
+      // 新的客户端连接时，就会被调用
       Channel_info *channel_info= m_listener->listen_for_connection_event();
       if (channel_info != NULL)
         mgr->process_new_connection(channel_info);

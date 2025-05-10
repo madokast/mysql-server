@@ -1,0 +1,24 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug MySQL",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/workspaces/mysql-server/build/sql/mysqld",
+            "args": ["--basedir=/workspaces/mysql-server/build", "--datadir=/workspaces/mysql-server/build/data"],
+            "stopAtEntry": false,
+            "cwd": "/workspaces/mysql-server/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
